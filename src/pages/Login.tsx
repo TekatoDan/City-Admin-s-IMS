@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Lock, Mail, ShieldCheck } from 'lucide-react';
@@ -14,21 +14,30 @@ export default function Login() {
   // Listen for OAuth success message from the popup window
   useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
-      // Validate origin is from AI Studio preview or localhost
-      const origin = event.origin;
-      if (!origin.endsWith('.run.app') && !origin.includes('localhost')) {
+      // Only accept messages from our own origin for security
+      if (event.origin !== window.location.origin) {
         return;
       }
       
       if (event.data?.type === 'OAUTH_AUTH_SUCCESS') {
+        console.log('OAuth success message received');
         // Because the app runs in an iframe, the popup window and the iframe have 
         // partitioned local storage. We must manually pass the session tokens from 
         // the popup to the iframe and set them here.
         if (event.data.session) {
-          const { access_token, refresh_token } = event.data.session;
-          await supabase.auth.setSession({ access_token, refresh_token });
+          try {
+            const { access_token, refresh_token } = event.data.session;
+            const { error } = await supabase.auth.setSession({ access_token, refresh_token });
+            if (error) throw error;
+            console.log('Session set successfully');
+            window.location.href = '/';
+          } catch (err: any) {
+            console.error('Failed to set session:', err);
+            setError(`Failed to complete login: ${err.message}`);
+          }
+        } else {
+          window.location.href = '/';
         }
-        window.location.href = '/';
       }
     };
     
@@ -125,6 +134,20 @@ export default function Login() {
             </svg>
             Continue with Google
           </button>
+
+          {/* Browser Troubleshooting */}
+          <div className="rounded-lg bg-amber-50 p-4 text-xs text-amber-800 border border-amber-200 space-y-2">
+            <p className="font-bold flex items-center gap-1">
+              <ShieldCheck className="w-3 h-3" />
+              Trouble logging in?
+            </p>
+            <p>If you see a <strong>"No access"</strong> or <strong>"403 Forbidden"</strong> error after clicking Google login:</p>
+            <ul className="list-disc pl-4 space-y-1">
+              <li><strong>Chrome:</strong> Go to <code>Settings → Privacy and security → Third-party cookies</code> and select <strong>"Allow third-party cookies"</strong>.</li>
+              <li><strong>Brave:</strong> Disable <strong>Brave Shields</strong> for this site (click the lion icon in the address bar).</li>
+              <li><strong>Incognito:</strong> Login may not work in Incognito/Private mode due to cookie restrictions.</li>
+            </ul>
+          </div>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center" aria-hidden="true">

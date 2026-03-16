@@ -1,7 +1,10 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Set up the worker from a CDN to avoid Vite build issues
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// Use Vite's ?url import to correctly bundle the worker
+// @ts-ignore
+import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 /**
  * Extracts all text from a PDF file
@@ -36,7 +39,11 @@ export async function extractTextFromFile(file: File): Promise<string> {
     return extractTextFromPDF(file);
   }
   
-  if (file.type === 'text/plain' || file.type === 'text/markdown' || file.type === 'text/csv') {
+  if (
+    file.type.startsWith('text/') || 
+    file.type === 'application/json' ||
+    file.name.match(/\.(md|ts|js|json|html|css|csv|txt|jsx|tsx)$/i)
+  ) {
     return await file.text();
   }
   
