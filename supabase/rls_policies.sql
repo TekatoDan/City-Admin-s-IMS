@@ -16,6 +16,11 @@ create policy "Users can view teams they belong to"
     where team_id = teams.id and user_id = auth.uid()
   ));
 
+-- Users can create teams
+create policy "Users can create teams"
+  on public.teams for insert
+  with check ( auth.uid() = created_by );
+
 -- Only team admins or owners can update team details
 create policy "Admins and owners can update team"
   on public.teams for update
@@ -31,6 +36,17 @@ create policy "Users can view team members"
     select 1 from public.team_members tm 
     where tm.team_id = team_members.team_id and tm.user_id = auth.uid()
   ));
+
+-- Users can insert team members (themselves when creating a team, or others if they are admin/owner)
+create policy "Users can insert team members"
+  on public.team_members for insert
+  with check ( 
+    auth.uid() = user_id OR 
+    exists (
+      select 1 from public.team_members tm 
+      where tm.team_id = team_members.team_id and tm.user_id = auth.uid() and tm.role in ('admin', 'owner')
+    )
+  );
 
 -- ----------------------------------------------------------------------------------------
 -- FOLDERS

@@ -50,6 +50,8 @@ export default function AuthCallback() {
       if (data.session && mounted) {
         finishAuth(data.session);
       }
+    }).catch((err) => {
+      if (mounted) setError(err.message || "Failed to get session");
     });
 
     // 3. Timeout fallback just in case something goes wrong
@@ -65,23 +67,23 @@ export default function AuthCallback() {
   }, [navigate]);
 
   return (
-    <div className="flex h-screen w-full flex-col items-center justify-center bg-slate-50">
+    <div className="flex h-screen w-full flex-col items-center justify-center bg-slate-50 dark:bg-slate-950">
       {error ? (
         <div className="text-center space-y-4">
-          <p className="text-red-600 font-medium text-lg">Authentication Error</p>
-          <p className="text-slate-600">{error}</p>
+          <p className="text-red-600 dark:text-red-400 font-medium text-lg">Authentication Error</p>
+          <p className="text-slate-600 dark:text-slate-400">{error}</p>
           <button 
             onClick={() => window.close()} 
-            className="text-indigo-600 hover:text-indigo-800 font-medium hover:underline"
+            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium hover:underline"
           >
             Close Window
           </button>
         </div>
       ) : (
         <>
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-600 mb-4" />
-          <p className="text-slate-600 font-medium">Completing authentication...</p>
-          <p className="text-slate-500 text-sm">This window should close automatically.</p>
+          <Loader2 className="h-8 w-8 animate-spin text-indigo-600 dark:text-indigo-400 mb-4" />
+          <p className="text-slate-600 dark:text-slate-400 font-medium">Completing authentication...</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">This window should close automatically.</p>
         </>
       )}
     </div>
